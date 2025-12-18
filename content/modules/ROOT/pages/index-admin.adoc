@@ -1,0 +1,40 @@
+= User guide
+
+In this setup, we will show how to configure the operators that provide the functionalities to use confidential containers. We will also explain purpose of such settings and then run some examples to see how confidential containers work.
+
+[NOTE]
+====
+Because many environment variables are used through the lab, it is recommended to use tmux to connect to the bastion host as that will keep your session active even if there are disconnections and the value of the variables will not be lost.
+
+[source,sh,role=execute]
+----
+ssh lab-user@<bastion-host> tmux
+----
+====
+
+[#credentials]
+== Setting up the environment
+
+Make sure you log into the right service principal:
+
+[source,sh,role=execute]
+----
+AZ_CID=$(oc get secrets/azure-credentials -n kube-system -o json | jq -r .data.azure_client_id | base64 -d)
+
+AZ_CS=$(oc get secrets/azure-credentials -n kube-system -o json | jq -r .data.azure_client_secret | base64 -d)
+
+AZ_TID=$(oc get secrets/azure-credentials -n kube-system -o json | jq -r .data.azure_tenant_id | base64 -d)
+
+echo azure_client_id $AZ_CID
+echo azure_client_secret $AZ_CS
+echo azure_tenant_id $AZ_TID
+
+az login --service-principal -u $AZ_CID -p $AZ_CS --tenant $AZ_TID
+----
+
+Export the resource group.
+
+[source,sh,role=execute]
+----
+export AZURE_RESOURCE_GROUP=$(oc get infrastructure/cluster -o jsonpath='{.status.platformStatus.azure.resourceGroupName}')
+----
