@@ -1,19 +1,23 @@
 name: modules
-title: Default Title
+title: Understanding Confidential Containers - Workshop on ARO
 version: master
+start_page: ROOT:index.adoc
 nav:
   - modules/ROOT/nav.adoc
 
 asciidoc:
+  extensions:
+  - './lib/asam-asciidoctor_extensions-registered.js'
   attributes:
-    lab_name: "I'm the lab_name var"
+    lab_name: "Understanding Confidential Containers - Workshop on ARO"
     release-version: master
     page-pagination: true
-    my_var: "foo"
-    guid: my-guid
-    ssh_user: devops
-    ssh_password: devops
-    ssh_command: ssh someone@example.com
-    page-links:
-    - url: https://redhat.com
-      text: Red Hat
+    aro_console: https://placehoder_openshift_web_console
+    azure_resource_group: insert_your_rg_here
+    aro_kube_username: kubeadmin
+    aro_kube_password: insert_your_pw_here
+    guid: insert-your-guid-here
+    azure_service_principal_id: insert_your_sp_here
+    azure_service_principal_password: insert_your_sppw_here
+    azure_tenant_id: insert_your_tid_here
+    azure_subscription: insert_your_sub_here
