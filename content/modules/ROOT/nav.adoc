@@ -1,7 +1,33 @@
-* xref:module-01.adoc[1. RPM Native Container]
-** xref:module-01.adoc#repositories[Repositories]
-** xref:module-01.adoc#software[Software]
+* xref:index.adoc[Introduction]
 
-* xref:module-02.adoc[2. GitHub Sourced Container]
-** xref:module-02.adoc#prerequisites[Install Prerequisites]
-** xref:module-02.adoc#container[Enable Container]
+* xref:index-theory.adoc[Theory]
+** xref:osc.adoc[Confidential containers: Openshift sandboxed containers operator]
+** xref:trustee.adoc[Remote attester: the Trustee operator]
+
+* xref:index-admin.adoc[User guide]
+** xref:02-configure-trustee.adoc[2. Configure the Trustee operator]
+*** xref:02-configure-trustee.adoc#trustee-keys[Create the keys]
+*** xref:02-configure-trustee.adoc#trusteeconfig[Create the Trusteeconfig]
+*** xref:02-configure-trustee.adoc#trustee-route[Create the route]
+*** xref:02-configure-trustee.adoc#trustee-cisvp[Container image signature verification policy]
+*** xref:02-configure-trustee.adoc#trustee-initdata[Create the initdata policy]
+*** xref:02-configure-trustee.adoc#trustee-refval[Reference values]
+*** xref:02-configure-trustee.adoc#trustee-key[Add a secret to Trustee]
+*** xref:02-configure-trustee.adoc#trustee-kbsconfig[Update the KbsConfig]
+*** xref:02-configure-trustee.adoc#trustee-optionals[Optional: Customize and Understand Trustee]
+** xref:02-configure-osc.adoc[4. Configure the OSC operator]
+*** xref:02-configure-osc.adoc#feature-gate[Create the feature gate]
+*** xref:02-configure-osc.adoc#pp-cm[Create the peer-pods configmap]
+*** xref:02-configure-osc.adoc#pp-kc[Create the KataConfig]
+
+* xref:03-deployment-settings.adoc[How to deploy a CoCo pod]
+
+* xref:03-deploy-workload.adoc[Hello openshift]
+
+* xref:03-unsigned-pod.adoc[Test the image signature verification]
+
+* xref:05-fraud-detection-simple.adoc[Fraud-detection notebook]
+
+* xref:troubleshooting.adoc[Troubleshooting]
+
+* xref:conclusion.adoc[Conclusion and what's next]
