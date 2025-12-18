@@ -1,43 +1,34 @@
 = {lab_name}
 
-The `lab_name` var, known as an asciidoc attribute, above was set in `./content/antora.yml` and can be used to set the lab_name or title of your content.
-You are both free to change its value and if you prefer to use a different var name, you can change the value of `lab_name`, for example to `title` in `./content/antora.yml` and then reference it in your content as `\{title}`. +
+Red Hat https://docs.redhat.com/en/documentation/openshift_sandboxed_containers[Openshift sandboxed containers, window=blank] provides the capability to run https://www.redhat.com/en/blog/learn-about-confidential-containers[**Confidential Containers (CoCo)**, window=blank]. Confidential Containers are containers deployed within an isolated hardware enclave protecting data and code from privileged users such as cloud or cluster administrators. The https://confidentialcontainers.org/[CNCF Confidential Containers project, window=blank] is the foundation for the OpenShift CoCo solution. Note that CoCo is an additional feature provided by OpenShift sandboxed containers, and consequently, it's available through the OpenShift sandboxed containers operator.
 
-image::rhel-logo-black.jpg[rhel-logo-black,55%,55%]
+Please refer to the https://www.redhat.com/en/blog/exploring-openshift-confidential-containers-solution[Exploring the OpenShift Confidential Containers solution, window=blank] blogpost for more information.
 
-== Variables
+In this workshop, we are also showing another operator, the **confidential compute attestation operator** (also known as `Trustee`), which can verify the trustworthiness of TEEs remotely. For more information, please refer to https://www.redhat.com/en/blog/introducing-confidential-containers-trustee-attestation-services-solution-overview-and-use-cases[this blogpost, window=blank].
 
-Other vars can also be set there, such as `ssh_user` and `ssh_password`, and referenced inline in the lab content by using the `\{foo}` syntax.
+We will show how to set up the Trustee and OSC operator and run a simple hello-openshift **Confidential Container** running with the *kata-remote* runtime class (peer pods solution). This effectively means that the hello-openshift container runs in a **separate**, **confidential**, **independent** virtual machine, and not in the worker node. In another example, we will also show how **attestation** and **secure key retrieval** workflow happens between a CoCo pod and Trustee.
 
-This is another var, or asciidoc attribute, from `./content/antora.yml` {my_var}
+The goal of this workshop is to provide the user not only an environment and documentation to test CoCo, but also provide additional explanations on the design choices behind some options and the benefit they bring to the overall user experience. CoCo is designed to bring **confidential computing** at kubernetes level, making it **as simple as possible** while preserving all security benefits that confidential computing brings.
 
-== Writing your lab
+Before starting this workshop, we suggest to read the following blogposts to get a background on CoCo:
 
-Whatever type of content you are writing we'll refer to your *content* as "your lab" in this document.
+* https://www.redhat.com/en/blog/what-confidential-containers-project[What is the Confidential Containers project?, window=blank]
+* https://www.redhat.com/en/blog/exploring-openshift-confidential-containers-solution[Exploring the OpenShift Confidential Containers solution, window=blank]
+* https://www.redhat.com/en/blog/use-cases-and-ecosystem-openshift-confidential-containers[Use cases and ecosystem for OpenShift Confidential Containers, window=blank]
+* https://www.redhat.com/en/blog/understanding-confidential-containers-attestation-flow[Understanding the Confidential Containers Attestation Flow, window=blank]
 
-=== Lab structure
+All blogposts are under this https://www.redhat.com/en/blog/learn-about-confidential-containers[blog series, window=blank].
 
-Wether you are writing a lab
+[#guide]
+== Choose your guide
 
-* First, we will build a monolithic application already compiled as RPM packages and put it into a container. This will allow us to deploy the application, copy it between machines, and update it separately from the operating system. This process affords us a portable and easily maintained component instead of tightly coupling the application with your operating system maintenance.
+There are three guides:
 
-* In closing we will build a second container on a different operating system version that makes an application not packaged into RPMs. This will be similar to a web application deployment, positioning the correct files at the right locations. To do this, we will pull a project from GitHub and position the component files within our container image. The purpose of this is to achieve a portable application container that can deploy on several different versions of Red Hat Enterprise Linux. This also provides the benefit of decoupling your application maintenance, which would all happen by building new containers versus operating system maintenance. The container is no longer reliant on the operating system installed on the machine where the application is deployed.
+* The xref:index-theory.adoc[theory], to get a high level overview of what confidential computing is and what are the two operators we are going to use.
 
-. Now let's examine this cluster a bit more by describing the cluster (the `$GUID` environment variable is already set for you so you can immediately describe your individual cluster):
-+
-[source,sh,role=execute]
-----
-podman ps
-----
-+
-.Sample Output
-[source,texinfo,subs="attributes"]
-----
-CONTAINER ID  IMAGE                        COMMAND           CREATED      STATUS      PORTS                 NAMES
-2dcfee9e50c4  docker.io/library/httpd:2.4  httpd-foreground  3 hours ago  Up 3 hours  0.0.0.0:8080->80/tcp  showroom-httpd
-----
+* The xref:index-admin.adoc[Admin guide], to learn how to install and configure the operators, which configs to set up and why we need such things. This is useful for admins that need to set up the cluster environment.
 
-=== Lab Access
+* The xref:index-user.adoc[User guide], where both OSC and Trustee will be automatically installed and configured, and what is left to do is just run the confidential container. This is useful for end users that want to experiment CoCo without going into the installation steps.
 
-The terminal window to your right is *already* logged into the lab environment as the `{ssh_user}` user via `ssh`.
-All steps of this lab are to be completed as the `{ssh_user}` user.
+IMPORTANT: In this workshop, we will install Trustee in the **same cluster** that hosts OSC and therefore Confidential Containers. **This is not a suitable solution for production environments.**
+Because the Trustee operator contains the reference values and secrets that are necessary to establish if a Confidential Container is running in a truly safe environment, it should be installed in a separate cluster running in a trusted environment (on prem, for example). Because of the limitations of this ARO workshop, it is not possible to set up two clusters. You can assume that **everything running in the trustee-operator-system namespace should run in a trusted, separate environment**.
