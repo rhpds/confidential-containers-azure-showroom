@@ -552,7 +552,6 @@ cid=$(podman create --root /mnt/podvm --entrypoint /bin/true $IMAGE)
 echo "CID ${cid}"
 podman --root /mnt/podvm cp $cid:/image/measurements.json /mnt/podvm
 
-podman rm $cid
 JSON_DATA=$(cat /mnt/podvm/measurements.json)
 ----
 
