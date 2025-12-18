@@ -1,0 +1,279 @@
+= Configure the OSC operator
+
+Now that the OSC operator is installed, we need to set it up.
+
+**Prerequisites**
+
+To complete this section, it is mandatory to have all Azure credentials at hand defined in the xref:index-admin.adoc#credentials[introduction], because they will have to be inserted in the various resources that we are going to create.
+
+In order to create the xref:02-configure-osc.adoc#pp-cm[peer-pods configmap], it is necessary to have Trustee xref:01-install-trustee.adoc#twebui[installed] and xref:02-configure-trustee.adoc#trustee-route[configured].
+
+If you are following this guide in an ARO/Azure environment deployed **outside** the RH demo environment, and your cluster version is older than `4.18.30`, you are expected to upgrade to `4.18.30+` **before** installing OSC. More info xref:02-configure-osc.adoc#upgrade[here].
+
+[#feature-gate]
+== Enable Confidential Containers feature gate
+
+Create and apply `cc-fg.yaml` ConfigMap
+
+[source,sh,role=execute]
+----
+mkdir -p ~/osc
+cd ~/osc
+
+cat > cc-fg.yaml <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: osc-feature-gates
+  namespace: openshift-sandboxed-containers-operator
+data:
+  confidential: "true"
+EOF
+
+cat cc-fg.yaml
+
+oc apply -f cc-fg.yaml
+----
+
+[#pp-cm]
+== Create the peer-pods configmap
+
+We need to get the necessary Azure credentials.
+
+In case you didn't do it at the beginning, run `export AZURE_RESOURCE_GROUP={azure_resource_group}`.
+
+
+Azure self managed clusters only have a single resource group.
+
+[source,sh,role=execute]
+----
+# Get the Azure created RG
+AZURE_RESOURCE_GROUP=$(oc get infrastructure/cluster -o jsonpath='{.status.platformStatus.azure.resourceGroupName}')
+
+# Get the Azure region
+AZURE_REGION=$(oc get secret -n kube-system azure-credentials -o jsonpath="{.data.azure_region}" | base64 -d)
+
+# Get VNET name used by Azure. openshift-install only creates one.
+AZURE_VNET_NAME=$(az network vnet list --resource-group $AZURE_RESOURCE_GROUP --query "[].{Name:name}" --output tsv)
+
+# Get the Openshift worker subnet ip address id.
+# This usually contains 'worker'
+AZURE_WORKER_SUBNET_ID=$(az network vnet subnet list --resource-group $AZURE_RESOURCE_GROUP --vnet-name $AZURE_VNET_NAME --query "[].{Id:id} | [? contains(Id, 'worker')]" --output tsv)
+
+AZURE_NSG_ID=$(az network nsg list --resource-group $AZURE_RESOURCE_GROUP --query "[].{Id:id}" --output tsv)
+
+echo "AZURE_REGION: \"$AZURE_REGION\""
+echo "AZURE_RESOURCE_GROUP: \"$AZURE_RESOURCE_GROUP\""
+echo "AZURE_SUBNET_ID: \"$AZURE_WORKER_SUBNET_ID\""
+echo "AZURE_NSG_ID: \"$AZURE_NSG_ID\""
+----
+
+[#gateway]
+. Create the necessary ip and gateway to enable connection between CoCo and the worker node.
++
+[source,sh,role=execute]
+----
+PEERPOD_NAT_GW=peerpod-nat-gw
+PEERPOD_NAT_GW_IP=peerpod-nat-gw-ip
+
+az network public-ip create -g "${AZURE_RESOURCE_GROUP}" \
+    -n "${PEERPOD_NAT_GW_IP}" -l "${AZURE_REGION}" --sku Standard
+
+az network nat gateway create -g "${AZURE_RESOURCE_GROUP}" \
+    -l "${AZURE_REGION}" --public-ip-addresses "${PEERPOD_NAT_GW_IP}" \
+    -n "${PEERPOD_NAT_GW}"
+
+az network vnet subnet update --nat-gateway "${PEERPOD_NAT_GW}" \
+    --ids "${AZURE_WORKER_SUBNET_ID}"
+
+AZURE_NAT_ID=$(az network vnet subnet show --ids "${AZURE_WORKER_SUBNET_ID}" \
+    --query "natGateway.id" -o tsv)
+
+echo "AZURE_NAT_ID: \"$AZURE_NAT_ID\""
+----
+
+. Create and apply the `peer-pods-configmap.yaml` ConfigMap. Note that at this point you must have already xref:02-configure-trustee.adoc#trustee-initdata[configured initdata] and got `$INITDATA`.
++
+[source,sh,role=execute]
+----
+cat > pp-cm.yaml <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: peer-pods-cm
+  namespace: openshift-sandboxed-containers-operator
+data:
+  CLOUD_PROVIDER: "azure"
+  VXLAN_PORT: "9000"
+  AZURE_INSTANCE_SIZES: "Standard_DC4as_v5,Standard_DC4es_v5, Standard_DC8es_v5, Standard_DC8as_v5"
+  AZURE_INSTANCE_SIZE: "Standard_DC4as_v5"
+  AZURE_RESOURCE_GROUP: "${AZURE_RESOURCE_GROUP}"
+  AZURE_REGION: "${AZURE_REGION}"
+  AZURE_SUBNET_ID: "${AZURE_WORKER_SUBNET_ID}"
+  AZURE_NSG_ID: "${AZURE_NSG_ID}"
+  PROXY_TIMEOUT: "5m"
+  DISABLECVM: "false"
+  INITDATA: "${INITDATA}"
+  PEERPODS_LIMIT_PER_NODE: "10"
+  TAGS: "key1=value1,key2=value2"
+  ROOT_VOLUME_SIZE: "20"
+  AZURE_IMAGE_ID: ""
+EOF
+
+clear
+cat pp-cm.yaml
+
+oc apply -f pp-cm.yaml
+----
++
+IMPORTANT: Settings that accept multiple, comma separated parameters like `AZURE_IMAGE_SIZES` and `TAGS` should **not** have spaces between the parameters. For example, use `TAGS: "key1=value1,key2=value2"` and not `TAGS: "key1=value1, key2=value2"`.
++
+Explanation:
++
+.. `AZURE_INSTANCE_SIZE`: default instance size, if not specified in the `io.katacontainers.config.hypervisor.machine_type` xref:03-deployment-settings.adoc#optional-options[pod annotation].
++
+Note the azure terminology for instances: the pattern is usually `Standard_X[C][num_cpus][a or e]xx_vx` where `C` stands for **Confidential**, `a` for CPUs using **AMD SEV/SNP** technology, and `e` for CPUs using **Intel TDX** technology. Therefore `Standard_DC4_es_v5` is a confidential instance with 4 Intel CPUs using TDX to provide data in use confidentiality.
++
+For this example, we are going to default the instance deployment AMD cpus, because they are available in all regions. If you want to deploy a TDX instance, check the catalog region availability (usually `northeurope` or `westeurope` are a good choice) and deploy a new workshop in that region.
+.. `AZURE_INSTANCE_SIZES`: this is an "allowlist" to restrict the instance types that the pod can actually run. It is especially useful if the OSC setup and pod deployment is done by two different actors, to avoid using extremely expensive instances from being misused.
++
+Azure instance types are explained and listed https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview?tabs=breakdownseries%2Cgeneralsizelist%2Ccomputesizelist%2Cmemorysizelist%2Cstoragesizelist%2Cgpusizelist%2Cfpgasizelist%2Chpcsizelist[here, window=blank].
++
+Because of the quota limitations of this workshop, it is unlikely that it will be possible to deploy instances bigger than `Standard_DC4*`.
+.. `PEERPODS_LIMIT_PER_NODE`: Specify the maximum number of peer pods that can be created per node. The default value is `10`.
+.. `TAGS`: You can configure custom tags as key:value pairs for pod VM instances to track peer pod costs or to identify peer pods in different clusters.
+.. `ROOT_VOLUME_SIZE`: Optional: Specify the root volume size in gigabytes for the pod VM. The default and minimum size is 6 GB. Increase this value for pods with larger container images. This volume is **encrypted** and created at boot time. It will contain all data that the CoCo workload will store on disk.
+.. `AZURE_IMAGE_ID`: this is purposefully left empty. It will be filled in automatically by a Job created by the operator later. Red Hat builds and ships a https://www.redhat.com/en/blog/deploy-sensitive-workloads-with-openshift-confidential-containers[default image] which already contains all the necessary CoCo components, plus the following security features:
++
+* Disk integrity protection: the root disk is integrity protected, meaning nobody is able to mount it offline and inject files inside.
++
+* Data volume encryption: all data stored by the CoCo workload is stored in a separate, encrypted container.
++
+* Sealed secrets support: A sealed secret is an encapsulated secret available only within a TEE after verifying the integrity of the TEE environment.
+
+[#pp-restart]
+[NOTE]
+====
+If you later update the peer pods config map, you must also restart the `osc-caa-ds` daemonset to apply the changes:
+[source,sh,role=execute]
+----
+oc set env ds/osc-caa-ds -n openshift-sandboxed-containers-operator REBOOT="$(date)"
+----
+====
+
+[#pp-kc]
+== Create the peer-pods KataConfig
+
+You must create a `KataConfig` custom resource (CR) to install `kata-remote` as a runtime class on your worker nodes. This is a core operation that enables the worker nodes to create VMs.
+
+Creating the `KataConfig` CR triggers the Openshift sandboxed containers Operator to create a `RuntimeClass` CR named `kata-remote` with a default configuration. This enables users to configure workloads to use `kata-remote` as the runtime by referencing the CR in the `RuntimeClassName` field. This CR also specifies the resource overhead for the runtime.
+
+Openshift sandboxed containers installs `kata-remote` as a _secondary, optional_ runtime on the cluster and not as the primary runtime.
+
+[IMPORTANT]
+====
+Creating the KataConfig CR automatically reboots the worker nodes. **It should take around 15 minutes to install everything (job included)**.
+====
+
+. Create a KataConfig CDR and apply it. By default all worker nodes will be configured to run CoCo workloads. If you want to restrict it to specific worker nodes, then add any specific label to those worker does and update the `kataconfigPoolSelector`. For this workshop, we will apply a label `workerType=kataWorker` to a single worker node and install kata binaries only in there.
++
+[source,sh,role=execute]
+----
+
+oc label node $(oc get nodes -l node-role.kubernetes.io/worker -o jsonpath='{.items[0].metadata.name}') workerType=kataWorker
+
+cat > kataconfig.yaml <<EOF
+apiVersion: kataconfiguration.openshift.io/v1
+kind: KataConfig
+metadata:
+ name: example-kataconfig
+spec:
+  enablePeerPods: true
+  kataConfigPoolSelector:
+    matchLabels:
+      workerType: 'kataWorker'
+EOF
+
+cat kataconfig.yaml
+
+oc apply -f kataconfig.yaml
+----
+
++
+Expected output after all nodes have been updated:
++
+[source,texinfo,subs="attributes"]
+----
+NAME      CONFIG                                              UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
+kata-oc   rendered-kata-oc-894630a1c9cdf3ebef8bd98c72e26608   True      False      False      1              1                   1                     0                      13m
+----
+
+=== Verification
+. Make sure that the `AZURE_IMAGE_ID` in the `ConfigMap` is populated. If it isn't, make sure there is a job running called `osc-podvm-image-creation-<random-letters>`.
++
+[source,sh,role=execute]
+----
+oc get configmap peer-pods-cm -n openshift-sandboxed-containers-operator -o yaml | grep -m 1 AZURE_IMAGE_ID
+----
++
+If `AZURE_IMAGE_ID:` is still empty, check the job:
++
+[source,sh,role=execute]
+----
+watch oc get jobs -n openshift-sandboxed-containers-operator
+----
++
+Wait till the job `COMPLETIONS` doesn't change to `1/1`. It should take around 20 minutes.
+
+
+. Make sure that the required daemonset is created.
++
+[source,sh,role=execute]
+----
+oc get -n openshift-sandboxed-containers-operator ds/osc-caa-ds
+----
++
+Expected output:
++
+[source,texinfo,subs="attributes"]
+----
+NAME                            DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                      AGE
+osc-caa-ds   1         1         1       1            1           node-role.kubernetes.io/kata-oc=   22m
+----
+
+. Make sure the `RuntimeClass` are created.
++
+[source,sh,role=execute]
+----
+oc get runtimeclass
+----
++
+Expected output:
++
+[source,texinfo,subs="attributes"]
+----
+NAME             HANDLER          AGE
+kata             kata             152m
+kata-remote      kata-remote      152m
+----
+
+. This is the expected output when looking at the OSC pods (note the random character ending will change):
+[source,sh,role=execute]
+----
+oc get pods -n openshift-sandboxed-containers-operator
+----
+
+[source,texinfo,subs="attributes"]
+----
+NAME                                           READY   STATUS      RESTARTS   AGE
+controller-manager-5dd87698b7-9cqbn            2/2     Running     0          17m
+openshift-sandboxed-containers-monitor-m9ffw   1/1     Running     0          30m
+operator-metrics-server-857fb654c4-z24f4       1/1     Running     0          20m
+osc-podvm-image-creation-fltm8                 0/1     Completed   0          17m
+peer-pods-webhook-65cffdd499-2nh9q             1/1     Running     0          2m59s
+peer-pods-webhook-65cffdd499-8x684             1/1     Running     0          2m59s
+osc-caa-ds-vkfm5                               1/1     Running     0          2m59s
+----
+
+This is it! Now the cluster is ready to run workloads with `kata-remote` `RuntimeClass`!
+
