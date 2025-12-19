@@ -234,7 +234,7 @@ oc create secret generic $SIGNATURE_SECRET_NAME \
     -n trustee-operator-system
 ----
 
-If you want to sign your own container, refer to the https://developers.redhat.com/products/trusted-artifact-signer/overview[Red Hat Trusted Artifact Signer, window=blank] or other tools to sign container images. A simple guide on how to use upstream `cosign` is xref:04-sign-pod.adoc[here].
+If you want to sign your own container, refer to the https://developers.redhat.com/products/trusted-artifact-signer/overview[Red Hat Trusted Artifact Signer, window=blank] or other tools to sign container images.
 
 Note that `$SIGNATURE_SECRET_NAME` will be later added in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig].
 
