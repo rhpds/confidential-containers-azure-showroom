@@ -6,7 +6,7 @@ Now that the OSC operator is installed, we need to set it up.
 
 To complete this section, it is mandatory to have all Azure credentials at hand defined in the xref:index-admin.adoc#credentials[introduction], because they will have to be inserted in the various resources that we are going to create.
 
-In order to create the xref:02-configure-osc.adoc#pp-cm[peer-pods configmap], it is necessary to have Trustee xref:01-install-trustee.adoc#twebui[installed] and xref:02-configure-trustee.adoc#trustee-route[configured].
+In order to create the xref:02-configure-osc.adoc#pp-cm[peer-pods configmap], it is necessary to have Trustee installed and xref:02-configure-trustee.adoc#trustee-route[configured].
 
 If you are following this guide in an ARO/Azure environment deployed **outside** the RH demo environment, and your cluster version is older than `4.18.30`, you are expected to upgrade to `4.18.30+` **before** installing OSC. More info xref:02-configure-osc.adoc#upgrade[here].
 
