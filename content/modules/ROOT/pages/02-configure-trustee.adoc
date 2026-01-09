@@ -678,6 +678,19 @@ oc create secret generic $FD_SECRET_NAME \
 rm -rf fd.bin
 ----
 
+The latter key is for the fraud detection example. We will already create a namespace for it and we will add a sealed secret with an Azure SAS token to be able to fetch the dataset that will be used in the example.
+[source,sh,role=execute]
+----
+AZURE_SAS_SECRET_NAME=fraud-azure-sas
+oc create secret generic $AZURE_SAS_SECRET_NAME \
+  --from-literal azure-sas="sp=r&st=2025-10-27T15:42:27Z&se=2028-10-27T22:57:27Z&spr=https&sv=2024-11-04&sr=b&sig=vjaRotd7de%2B3QwlzHVaHF2GVyehw1xb3fFiXe9E7YOI%3D" \
+  -n trustee-operator-system
+SECRET=$(podman run -it quay.io/confidential-devhub/coco-tools:0.3.0 /tools/secret seal vault --resource-uri kbs:///default/${AZURE_SAS_SECRET_NAME}/azure-sas --provider kbs | grep -v "Warning")
+## NS secret
+oc create namespace fraud-detection
+oc create secret generic sealed-azure-sas --from-literal=azure-sas=$SECRET -n fraud-detection 
+----
+
 [#trustee-kbsconfig]
 == Update the KbsConfig
 
@@ -712,6 +725,7 @@ oc patch kbsconfig trusteeconfig-kbs-config \
   -p="[
     {\"op\": \"add\", \"path\": \"/spec/kbsSecretResources/-\", \"value\": \"$HELLO_SECRET_NAME\"},
     {\"op\": \"add\", \"path\": \"/spec/kbsSecretResources/-\", \"value\": \"$FD_SECRET_NAME\"},
+    {\"op\": \"add\", \"path\": \"/spec/kbsSecretResources/-\", \"value\": \"$AZURE_SAS_SECRET_NAME\"}
     {\"op\": \"add\", \"path\": \"/spec/kbsSecretResources/-\", \"value\": \"$SIGNATURE_SECRET_NAME\"},
     {\"op\": \"add\", \"path\": \"/spec/kbsSecretResources/-\", \"value\": \"$POLICY_SECRET_NAME\"}
   ]"
