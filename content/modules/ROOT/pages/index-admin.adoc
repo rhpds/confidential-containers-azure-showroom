@@ -4,7 +4,7 @@ In this setup, we will show how to configure the operators that provide the func
 
 [NOTE]
 ====
-Because many environment variables are used through the lab, it is recommended to use tmux to connect to the bastion host as that will keep your session active even if there are disconnections and the value of the variables will not be lost. Get the ssh login command to connect to the bastion host from the credentials you received when ordering this environment and append tmux at the end. For example:
+Because many environment variables are used through the lab, it is recommended to use tmux to connect to the bastion host as that will keep your session active even if there are disconnections and the value of the variables will not be lost. Get the ssh login command to connect to the bastion host from the credentials you received when ordering this environment and append _tmux_ at the end. For example:
 
 [source,sh,role=execute]
 ----
