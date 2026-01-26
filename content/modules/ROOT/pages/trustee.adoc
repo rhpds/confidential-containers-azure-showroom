@@ -1,8 +1,8 @@
-= The Trustee operator
+= The Red Hat build of Trustee operator
 
 In confidential computing environments, *attestation* is crucial in verifying the trustworthiness of the location where you plan to run your workload or where you plan to send confidential information. Before actually running the workload or transmitting the confidential information, you need to perform **attestation**.
 
-The https://github.com/confidential-containers/trustee[Trustee project, window=blank] (previously known as https://github.com/confidential-containers/kbs[CoCo KBS, window=blank]) includes components deployed on a trusted side and used to verify whether the remote workload is running in a trusted execution environment (TEE). It also verifies that the remote environment uses the expected software and hardware versions.
+The https://github.com/confidential-containers/trustee[Red Hat build of Trustee, window=blank] (previously known as https://github.com/confidential-containers/kbs[CoCo KBS, window=blank]) includes components deployed on a trusted side and used to verify whether the remote workload is running in a trusted execution environment (TEE). It also verifies that the remote environment uses the expected software and hardware versions.
 
 For an **overview of attestation**, read our https://www.redhat.com/en/blog/learn-about-confidential-containers[Learn about Confidential Computing Attestation, window=blank] blog series.
 
@@ -14,7 +14,7 @@ image::trustee.png[link=self, window=blank]
 
 What is a "secret"? Suppose the container image or the workload (AI model, or a generic binary running in the container) is encrypted. This means that at development phase, in a secure environment, some/all components of the container are encrypted, but the key to decrypt is not embedded inside the container. Therefore running such containers without the key will not even start the application, since all files are encrypted blobs.
 
-The key is instead provided to a remote attester (Trustee operator), which holds it as an Openshift Secret. This secret is sent back to the CoCo pod asking for it **only if** attestation has been successful.
+The key is instead provided to a remote attester (deployed by the Red Hat build of Trustee operator), which holds it as an OpenShift Secret. This secret is sent back to the CoCo pod asking for it **only if** attestation has been successful.
 
 In other words, the workflow is the following:
 
@@ -23,7 +23,7 @@ image::workflow.png[link=self, window=blank]
 . A Confidential Container is developed in a secure environment. In addition to the traditional development steps, two additional actions are necessary:
 .. The binary/pod image is encrypted with a secure key, which is **not** embedded inside the container.
 .. The container logic is extended to initially perform a `curl http://127.0.0.1:8006/cdh/resource/<path to the Trustee secret>` to fetch the secret from Trustee, assuming attestation was successful, and decrypt the application/container.
-. The Trustee operator is installed and configured in a secure environment, and the secure key used to encrypt the pod is loaded into it.
+. The Red Hat build of Trustee operator is installed and configured in a secure environment, and the secure key used to encrypt the pod is loaded into it.
 . In the untrusted cluster, OSC is installed and configured to use CoCo and connect with Trustee.
 . The developed CoCo pod is started. The pod starts in a Confidential VM, which then starts the actual containerized application.
 . The application performs the `curl` call to ask for the secret
