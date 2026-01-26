@@ -4,13 +4,13 @@ Red Hat https://docs.redhat.com/en/documentation/openshift_sandboxed_containers[
 
 Please refer to the https://www.redhat.com/en/blog/exploring-openshift-confidential-containers-solution[Exploring the OpenShift Confidential Containers solution, window=blank] blogpost for more information.
 
-In this workshop, we are also showing another operator, the **confidential compute attestation operator** (also known as `Trustee`), which can verify the trustworthiness of TEEs remotely. For more information, please refer to https://www.redhat.com/en/blog/introducing-confidential-containers-trustee-attestation-services-solution-overview-and-use-cases[this blogpost, window=blank].
+In this workshop, we are also showing another operator, the **Red Hat build of Trustee operator**, which can verify the trustworthiness of TEEs remotely. For more information, please refer to https://www.redhat.com/en/blog/introducing-confidential-containers-trustee-attestation-services-solution-overview-and-use-cases[this blogpost, window=blank].
 
 We will show how to set up the Trustee and OSC operator and run a simple hello-openshift **Confidential Container** running with the *kata-remote* runtime class (peer pods solution). This effectively means that the hello-openshift container runs in a **separate**, **confidential**, **independent** virtual machine, and not in the worker node. In another example, we will also show how **attestation** and **secure key retrieval** workflow happens between a CoCo pod and Trustee.
 
 The goal of this workshop is to provide the user not only an environment and documentation to test CoCo, but also provide additional explanations on the design choices behind some options and the benefit they bring to the overall user experience. CoCo is designed to bring **confidential computing** at kubernetes level, making it **as simple as possible** while preserving all security benefits that confidential computing brings.
 
-Before starting this workshop, we suggest to read the following blogposts to get a background on CoCo:
+After doing this workshop, we suggest to read the following blogposts to get further background on CoCo:
 
 * https://www.redhat.com/en/blog/what-confidential-containers-project[What is the Confidential Containers project?, window=blank]
 * https://www.redhat.com/en/blog/exploring-openshift-confidential-containers-solution[Exploring the OpenShift Confidential Containers solution, window=blank]
