@@ -45,7 +45,7 @@ This notebook specifically uses python sdk to download the encrypted data from A
 * Closely align with regular interactive AI workflows which uses python SDKs to download data from s3, azure, minio etc.
 * Provides an example of programmatic storage access for AI workloads when using the peer-pods approach.
 
-Before running this notebook, ensure that `ROOT_VOLUME_SIZE` in the xref:02-configure-osc.adoc#pp-cm[peer-pods configmap] is set at least to `20` GB, as the steps in the guide will install a lot of python packages. If you modify that value, remember as always to to xref:02-configure-osc.adoc##pp-restart[restart the OSC deployment]!
+Before running this notebook, ensure that `ROOT_VOLUME_SIZE` in the xref:02-configure-osc.adoc#pp-cm[peer-pods configmap] is set at least to `20` GB, as the steps in the guide will install a lot of python packages. If you modify that value, remember as always to xref:02-configure-osc.adoc##pp-restart[restart the OSC deployment].
 
 [source,sh,role=execute]
 ----
@@ -59,7 +59,7 @@ Switch to the newly created `fraud-detection` namespace
 oc project fraud-detection
 ----
 
-Wait that the pod is created.
+Wait until the pod is created.
 [source,sh,role=execute]
 ----
 watch oc get pods/fraud-encrypted-datasets
