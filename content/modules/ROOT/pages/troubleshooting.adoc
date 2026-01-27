@@ -2,18 +2,14 @@
 
 Here you can find the solution to most of the common errors.#
 
-== Which environment are you using?
-
-Some of the steps differ if you are using the **RHDP demo workshop**, a standard **ARO deployment** or **Azure self managed cluster**. Check the various tabs in the steps.
-
 == Follow the order
 
 Order is very important. If you install OSC and insert an empty/incomplete INITDATA in it (for example empty trustee URL), the CoCo pod will not start because it will try to connect to a non-existing service, getting 404 and therefore preventing the pod from creating.
 
 In general, the order is:
 
-. Install & Configure Trustee. This allows us to know the Trustee route to provide to OSC, but also prepare the secrets needed by the CoCo pods (image signature, sealed secrets, and so on).
-. Install & Configure OSC. Now that we know the Trustee route, we have all pieces necessary to start a CoCo pod.
+. Install & configure Trustee. This allows us to know the Trustee route to provide to OSC, but also prepare the secrets needed by the CoCo pods (image signature, sealed secrets, and so on).
+. Install & configure OSC. Now that we know the Trustee route, we have all pieces necessary to start a CoCo pod.
 
 It is possible to follow alternative orders, but you need to then remember to go back to the various configs and update them and refresh the respective deployments.
 
@@ -21,7 +17,7 @@ It is possible to follow alternative orders, but you need to then remember to go
 
 In this section, we cover the cases where the pod doesn't start at all.
 
-=== Check the Pod Events
+=== Check the pod events
 
 Most of the time, errors will be propragated to the pod events. Make sure to check that first.
 
@@ -29,7 +25,7 @@ Most of the time, errors will be propragated to the pod events. Make sure to che
 
 Not all region support all the available confidential instance sizes. For example `eastus` only supports Standard_DC***as**_v5, and not Standard_DC***es**_v5.
 
-If you use the wrong instance size, you will see the following error in the Events:
+If you use the wrong instance size, you will see the following error in the events:
 
 [source,texinfo,subs="attributes"]
 ----
@@ -50,7 +46,7 @@ If you update `AZURE_INSTANCE_SIZE` in xref:02-configure-osc.adoc#pp-cm[peer-pod
 
 == CoCo pod stuck
 
-In this section, we cover the cases where the pod or at least the VM has started, but the container fails to start.
+In this section, we cover the cases where the pod or at least the VM have started, but the container fails to start.
 
 === Peer-pods gateway not working/set correctly
 
@@ -99,7 +95,7 @@ az login --service-principal -u $AZ_CID -p $AZ_CS --tenant $AZ_TID
 
 === INITDATA wrongly set
 
-Ispect the INITDATA. Inspect the INITDATA field in the  xref:02-configure-osc.adoc#pp-cm[peer-pods-cm] configmap in OSC namespace, or alternatively if you are providing manually in as xref:03-deployment-settings.adoc#initdata-ann[annotation].
+Inspect the INITDATA field in the  xref:02-configure-osc.adoc#pp-cm[peer-pods-cm] configmap in OSC namespace, or alternatively if you are providing it manually as explained xref:03-deployment-settings.adoc#initdata-ann[here]:
 
 [source,sh,role=execute]
 ----
@@ -109,10 +105,10 @@ echo "H4sIAAAAAAAAA+1YW3PiuBJ+969wsQ/ZLYaLuTNV8yCMIYTYgG0gZCqVErZsZBvLSDLGnDr//c
 
 * Make sure all `url=` point to the right Trustee route
 * Make sure `cert=` and `kbs_cert=` are not empty if using https
-* Make sure `image_security_policy_uri` points at an existing policy, and the policy points to an existing secret
+* Make sure `image_security_policy_uri` points to an existing policy, and the policy points to an existing secret
 * Make sure the formatting and syntax is correct. Refer to xref:02-configure-trustee.adoc#trustee-ip[this initdata] for an example with correct syntax.
 
-If you update the INITDATA, remember to update the xref:02-configure-trustee.adoc#pcr8[PCR8] in the xref:02-configure-trustee.adoc#trustee-refval[reference values] and xref:02-configure-trustee.adoc#trustee-restart[restart the Trustee deployment]! Also if INITDATA is added/updated in xref:02-configure-osc.adoc#pp-cm[peer-pods-cm], remember to xref:02-configure-osc.adoc##pp-restart[restart the OSC deployment]!
+If you update the INITDATA, remember to update the xref:02-configure-trustee.adoc#pcr8[PCR8] in the xref:02-configure-trustee.adoc#trustee-refval[reference values] and xref:02-configure-trustee.adoc#trustee-restart[restart the Trustee deployment]. Also if INITDATA is added/updated in xref:02-configure-osc.adoc#pp-cm[peer-pods-cm], remember to xref:02-configure-osc.adoc##pp-restart[restart the OSC deployment].
 
 === Image signature policy too strict
 
@@ -120,7 +116,7 @@ If you put an image signature too strict and you forget about it, the CVM will s
 
 For example, the policy used xref:02-configure-trustee.adoc#trustee-cisvp[in this example] is pretty permissive, as it has `"default": [ { "type": "insecureAcceptAnything" } ]`. However, if you change the type to `reject`, then you drastically reduce the amounts of CoCo pod images you can run.
 
-If you update the signature policy, remember to xref:02-configure-trustee.adoc#trustee-restart[restart the Trustee deployment]!
+If you update the signature policy, remember to xref:02-configure-trustee.adoc#trustee-restart[restart the Trustee deployment].
 
 == CoCo pod attestation failed
 
@@ -141,7 +137,7 @@ If not, then it's a routing issue. If you are using passthrough, are you using t
 
 A common error is not pointing `dnsNames` to the Trustee route, or if creating the certs manually, not using `subjectAltName=DNS:$ROUTE`.
 
-If you update the https certificates, remember to xref:02-configure-trustee.adoc#trustee-restart[restart the Trustee deployment]!
+If you update the https certificates, remember to xref:02-configure-trustee.adoc#trustee-restart[restart the Trustee deployment].
 
 === Connectivity between Azure and Trustee
 
@@ -155,11 +151,11 @@ If you see that error, make sure the following is correct:
 
 * The xref:02-configure-trustee.adoc#trustee-ap[attestation policy] is formatted correctly. Sometimes wrong formatting or syntax errors prevent it from being loaded.
 * Same applies to the xref:02-configure-trustee.adoc#trustee-refval[reference values].
-** If you changed the podvm image to be used, the reference values also change!
-** If you changed the INITDATA, the reference values (xref:02-configure-trustee.adoc#pcr8[PCR8]) also change!
+** If you changed the podvm image to be used, the reference values also change.
+** If you changed the INITDATA, the reference values (xref:02-configure-trustee.adoc#pcr8[PCR8]) also change.
 * Lastly check also the xref:02-configure-trustee.adoc#trustee-rap[resource access policy].
 
-After ANY change to any config/secret of the Trustee operator, remember to xref:02-configure-trustee.adoc#trustee-restart[restart the deployment]!
+After ANY change to any config/secret of the Red Hat build of Trustee operator, remember to xref:02-configure-trustee.adoc#trustee-restart[restart the deployment].
 
 == CoCo pod inaccessible
 
@@ -173,8 +169,8 @@ Check the `policy.rego` section.
 ** It is possible to allow only specific exec commands. Refer to the xref:02-configure-trustee.adoc#trustee-ip[initdata example].
 * If `default ReadStreamRequest := false`, logs are not shown.
 
-If you update the INITDATA, remember to update the xref:02-configure-trustee.adoc#pcr8[PCR8] in the xref:02-configure-trustee.adoc#trustee-refval[reference values] and xref:02-configure-trustee.adoc#trustee-restart[restart the Trustee deployment]! Also if INITDATA is added/updated in xref:02-configure-osc.adoc#pp-cm[peer-pods-cm], remember to xref:02-configure-osc.adoc##pp-restart[restart the OSC deployment]!
+If you update the INITDATA, remember to update the xref:02-configure-trustee.adoc#pcr8[PCR8] in the xref:02-configure-trustee.adoc#trustee-refval[reference values] and xref:02-configure-trustee.adoc#trustee-restart[restart the Trustee deployment]. Also if INITDATA is added/updated in xref:02-configure-osc.adoc#pp-cm[peer-pods-cm], remember to xref:02-configure-osc.adoc##pp-restart[restart the OSC deployment].
 
 == Facing an error that is not listed here?
 
-If you have access to the Red Hat workspace on Slack, feel free to post the error on `#forum-sandboxed-containers`! If you don't, contact a Red Hat representative and forward your question to him/her.
+If you have access to the Red Hat workspace on Slack, feel free to post the error on `#forum-sandboxed-containers`! If you don't, contact a Red Hat representative and forward your question to them.
