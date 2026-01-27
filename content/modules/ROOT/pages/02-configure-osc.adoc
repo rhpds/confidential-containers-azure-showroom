@@ -200,7 +200,15 @@ oc apply -f kataconfig.yaml
 ----
 
 +
-Expected output after all nodes have been updated:
+Check the nodes after they have been updated:
++
+[source,sh,role=execute]
+----
+oc get mcp
+---
+
+The output should be sinmilar to this:
+
 +
 [source,texinfo,subs="attributes"]
 ----
