@@ -199,10 +199,9 @@ cat kataconfig.yaml
 oc apply -f kataconfig.yaml
 ----
 
-[source,sh,role=execute]
-
 After all nodes have been updated run:
 
+[source,sh,role=execute]
 ----
 oc get mcp
 ----
