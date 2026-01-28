@@ -38,7 +38,7 @@ The entire process relies on remote attestation to securely release the decrypti
 
 == Start the Jupyter notebook
 
-Let's create a notebook and run it as CoCo. If you open the https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-showroom/refs/heads/main/helpers/fraud-encrypted-datasets/notebook.yaml[yaml code, window=blank], you will notice once again the only difference with a normal deployment is `runtimeClassName: kata-remote`.
+Let's create a notebook and run it as CoCo. If you open the https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-showroom/refs/heads/rh1/helpers/fraud-encrypted-datasets/notebook.yaml[yaml code, window=blank], you will notice once again the only difference with a normal deployment is `runtimeClassName: kata-remote`.
 
 This notebook specifically uses python sdk to download the encrypted data from Azure for two reasons:
 
@@ -49,7 +49,7 @@ Before running this notebook, ensure that `ROOT_VOLUME_SIZE` in the xref:02-conf
 
 [source,sh,role=execute]
 ----
-oc apply -f https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-showroom/refs/heads/main/helpers/fraud-encrypted-datasets/notebook.yaml
+oc apply -f https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-showroom/refs/heads/rh1/helpers/fraud-encrypted-datasets/notebook.yaml
 ----
 
 Switch to the newly created `fraud-detection` namespace
