@@ -199,9 +199,16 @@ cat kataconfig.yaml
 oc apply -f kataconfig.yaml
 ----
 
-+
-Expected output after all nodes have been updated:
-+
+[source,sh,role=execute]
+
+After all nodes have been updated run:
+
+----
+oc get mcp
+----
+
+Expected output:
+
 [source,texinfo,subs="attributes"]
 ----
 NAME      CONFIG                                              UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
